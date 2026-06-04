@@ -1,0 +1,558 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+
+import '../errors/app_exception.dart';
+import '../errors/app_error_handler.dart';
+import '../../models/auth_user.dart';
+import 'drive_service.dart';
+import 'firestore_service.dart';
+
+/// Handles all Google Sign-In and Firebase Authentication for Scopus.
+///
+/// Auth flow:
+///   1. Desktop OAuth client opens browser — Desktop clients ALWAYS return a
+///      refresh_token (no Google restriction), unlike Web clients.
+///   2. clientViaUserConsent exchanges code → AutoRefreshingAuthClient
+///      (access token auto-refreshes every hour, no manual work needed)
+///   3. Refresh token stored in flutter_secure_storage (Windows DPAPI)
+///   4. Firebase signInWithCredential(accessToken) establishes Firebase session
+///   5. On app restart: restoreDriveSession() silently rebuilds Drive client
+///      from the stored refresh token — no browser prompt needed
+class GoogleAuthService {
+  // ── OAuth Client (Desktop) ─────────────────────────────────────
+  // MUST use a Desktop application client (not Web) so that Google
+  // reliably returns a refresh_token in the localhost PKCE flow.
+  // Web clients in desktop redirect flows may silently omit the refresh_token.
+  //
+  // Create at: console.cloud.google.com → APIs & Services → Credentials
+  //   → + Create Credentials → OAuth 2.0 Client ID → Desktop app
+  static ClientId get _clientId => ClientId(
+    dotenv.env['GOOGLE_CLIENT_ID']!,
+    dotenv.env['GOOGLE_CLIENT_SECRET']!,
+  );
+
+  // email + profile → user identity
+  // openid → idToken for Firebase Auth
+  // drive.file → ONLY files/folders the app itself creates (least privilege)
+  static const List<String> _scopes = [
+    'openid',
+    'email',
+    'profile',
+    'https://www.googleapis.com/auth/drive.file',
+  ];
+
+  // ── Android Google Sign-In ─────────────────────────────────────
+  // Native account picker on Android — no browser, no localhost server.
+  // Session persistence and token refresh are managed internally by GoogleSignIn.
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+      'profile',
+      'https://www.googleapis.com/auth/drive.file',
+    ],
+  );
+
+  // ── Token File Storage ─────────────────────────────────────────────────────
+  // Cross-platform token storage:
+  //   Windows: %APPDATA%\Scopus\auth.json (filesystem ACLs)
+  //   Android: getApplicationDocumentsDirectory()/Scopus/auth.json (app sandbox)
+
+  Future<File> _getTokenFile() async {
+    final String baseDir;
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      baseDir = Platform.environment['APPDATA'] ?? '';
+    } else {
+      // Android / iOS — use the app's private documents directory
+      final docsDir = await getApplicationDocumentsDirectory();
+      baseDir = docsDir.path;
+    }
+    return File('$baseDir${Platform.pathSeparator}Scopus${Platform.pathSeparator}auth.json');
+  }
+
+  Future<void> _writeToken(String token) async {
+    try {
+      final file = await _getTokenFile();
+      await file.parent.create(recursive: true);
+      await file.writeAsString(jsonEncode({'refresh_token': token}));
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Drive] Token write failed: $e');
+    }
+  }
+
+  Future<String?> _readToken() async {
+    try {
+      final file = await _getTokenFile();
+      if (!await file.exists()) return null;
+      final data =
+          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return data['refresh_token'] as String?;
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Drive] Token read failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _deleteToken() async {
+    try {
+      final file = await _getTokenFile();
+      if (await file.exists()) await file.delete();
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Drive] Token delete failed: $e');
+    }
+  }
+
+  // ── Firebase Auth ────────────────────────────────────────────────
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  // AutoRefreshingAuthClient when signed in via clientViaUserConsent.
+  // Plain AuthClient after session restore via refreshCredentials().
+  // Null until signed in (or restoreDriveSession succeeds).
+  AuthClient? _authClient;
+
+  // Held only for the restore path so we can close it on sign-out.
+  // clientViaUserConsent manages its own internal base client.
+  http.Client? _restoreBaseClient;
+
+  // ── Auth State ───────────────────────────────────────────────────
+
+  /// Firebase Auth's real auth state stream.
+  /// Persists across restarts — no re-login needed on app reopen.
+  Stream<AuthUser?> get authStateChanges {
+    return _firebaseAuth.authStateChanges().map(
+      (user) => user != null ? _toAuthUser(user) : null,
+    );
+  }
+
+  /// The currently signed-in user, sourced from Firebase Auth.
+  AuthUser? get currentUser {
+    final user = _firebaseAuth.currentUser;
+    return user != null ? _toAuthUser(user) : null;
+  }
+
+  /// Authenticated HTTP client for Drive API calls.
+  AuthClient? get authClient => _authClient;
+
+  // ── Drive Session Restore ────────────────────────────────────────
+
+  /// Call this from main() after Firebase.initializeApp().
+  ///
+  /// If Firebase Auth has a persisted session but Drive access is gone
+  /// (app restarted), silently rebuilds the Drive client from the stored
+  /// refresh token — no browser prompt or user interaction needed.
+  Future<void> restoreDriveSession() async {
+    if (_firebaseAuth.currentUser == null) return;
+    if (_authClient != null) return;
+
+    // ── Android: use GoogleSignIn's built-in silent restore ──────
+    if (Platform.isAndroid) {
+      try {
+        // ignore: avoid_print
+        print('[Drive] Attempting silent restore (Android)...');
+        // Timeout prevents the app from freezing at the splash screen if
+        // Google Play Services is slow to respond or misconfigured.
+        final account = await _googleSignIn
+            .signInSilently()
+            .timeout(const Duration(seconds: 6), onTimeout: () => null);
+        if (account != null) {
+          _authClient = _GoogleSignInHttpClient(account);
+          // ignore: avoid_print
+          print('[Drive] ✅ Session restored silently (Android)');
+        } else {
+          // ignore: avoid_print
+          print('[Drive] ℹ️  No previous Google Sign-In session on Android');
+        }
+      } catch (e) {
+        // ignore: avoid_print
+        print('[Drive] ❌ Android silent restore failed ($e)');
+      }
+      return;
+    }
+
+    // ── Windows/Desktop: use stored refresh token ────────────────
+    // ignore: avoid_print
+    print('[Drive][DIAG] ── Restore attempt ────────────────────────────');
+    // ignore: avoid_print
+    print('[Drive][DIAG] Firebase UID: ${_firebaseAuth.currentUser?.uid}');
+
+    final refreshToken = await _readToken();
+    // ignore: avoid_print
+    print('[Drive][DIAG] Stored token on restore: '
+        '${refreshToken != null ? "PRESENT" : "NULL ← root cause C (storage not persisting across launches)"}');
+
+    if (refreshToken == null) {
+      return;
+    }
+    try {
+      final baseClient = http.Client();
+      final expiredCredentials = AccessCredentials(
+        AccessToken('Bearer', '', DateTime.fromMillisecondsSinceEpoch(0).toUtc()),
+        refreshToken,
+        _scopes,
+      );
+      final newCredentials =
+          await refreshCredentials(_clientId, expiredCredentials, baseClient);
+      _restoreBaseClient = baseClient;
+      _authClient = autoRefreshingClient(_clientId, newCredentials, baseClient);
+      // ignore: avoid_print
+      print('[Drive] ✅ Session restored silently');
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Drive] ❌ Restore failed ($e)');
+      final isRevoked = e.toString().contains('invalid_grant') ||
+          e.toString().contains('Token has been expired or revoked');
+      if (isRevoked) {
+        await _deleteToken();
+        // ignore: avoid_print
+        print('[Drive] 🗑  Token revoked — cleared from storage');
+      } else {
+        // ignore: avoid_print
+        print('[Drive] ℹ️  Transient error — token kept for next restart');
+      }
+    }
+  }
+
+  // ── Drive Reconnect (without Firebase sign-out) ──────────────────
+
+  /// Re-authorises Google Drive without touching the Firebase Auth session.
+  ///
+  /// Opens a browser OAuth flow, stores the new refresh token, and rebuilds
+  /// [authClient]. Call this when [authClient] is null after a restart.
+  Future<void> reconnectDriveOnly() async {
+    _authClient?.close();
+    _authClient = null;
+
+    // ── Android: re-run native sign-in picker ───────────────────
+    if (Platform.isAndroid) {
+      await _googleSignIn.signOut(); // force fresh account selection
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
+        throw const AuthException('Sign-in was cancelled.', code: 'cancelled');
+      }
+      _authClient = _GoogleSignInHttpClient(account);
+      // ignore: avoid_print
+      print('[Drive] ✅ Reconnected (Android)');
+      return;
+    }
+
+    // ── Windows: browser PKCE flow ───────────────────────────────
+    _restoreBaseClient?.close();
+    _restoreBaseClient = null;
+
+    _authClient = await clientViaUserConsent(
+      _clientId,
+      _scopes,
+      _openBrowserForAuth,
+    );
+
+    final refreshToken = _authClient!.credentials.refreshToken;
+    if (refreshToken != null) {
+      await _writeToken(refreshToken);
+      // ignore: avoid_print
+      print('[Drive] ✅ Reconnected — token stored');
+    } else {
+      // ignore: avoid_print
+      print('[Drive] ⚠️  Reconnected but no refresh token returned');
+    }
+  }
+
+
+  // ── Sign In ──────────────────────────────────────────────────────
+
+  Future<AuthUser?> signInWithGoogle() async {
+    try {
+      // ── Android: native account picker ──────────────────────────
+      if (Platform.isAndroid) {
+        final account = await _googleSignIn.signIn();
+        if (account == null) {
+          throw const AuthException('Sign-in was cancelled.', code: 'cancelled');
+        }
+        final auth = await account.authentication;
+
+        // Firebase sign-in using both tokens (idToken available from google_sign_in)
+        final oauthCredential = GoogleAuthProvider.credential(
+          accessToken: auth.accessToken,
+          idToken: auth.idToken,
+        );
+        final userCredential =
+            await _firebaseAuth.signInWithCredential(oauthCredential);
+
+        if (userCredential.user == null) {
+          throw const AuthException(
+            'Firebase sign-in returned no user.',
+            code: 'null-user',
+          );
+        }
+
+        // Drive HTTP client — auto-refreshes tokens via GoogleSignIn
+        _authClient = _GoogleSignInHttpClient(account);
+
+        AuthUser authUser = _toAuthUser(userCredential.user!);
+
+        // Drive workspace (idempotent)
+        try {
+          final driveService = DriveService(_authClient!);
+          final rootFolderId = await driveService.initializeWorkspace();
+          authUser = authUser.copyWith(rootFolderId: rootFolderId);
+          // ignore: avoid_print
+          print('[DriveService] ✅ rootFolderId=$rootFolderId');
+        } on DriveException catch (e) {
+          // ignore: avoid_print
+          print('[DriveService] ❌ ${e.message}');
+          AppErrorHandler.show(e);
+        } catch (e) {
+          AppErrorHandler.show(DriveException('Drive workspace setup failed: $e'));
+        }
+
+        // Firestore profile
+        try {
+          await FirestoreService().saveUserProfile(authUser);
+          // ignore: avoid_print
+          print('[FirestoreService] ✅ uid=${authUser.uid}');
+        } on FirestoreException catch (e) {
+          // ignore: avoid_print
+          print('[FirestoreService] ❌ ${e.message}');
+          AppErrorHandler.show(e);
+        }
+
+        return authUser;
+      }
+
+      // ── Windows/Desktop: browser PKCE flow ──────────────────────
+      // Step 1 — OAuth2 browser flow.
+      // _openBrowserForAuth injects access_type=offline + prompt=consent
+      // into the URL, so Google returns a refresh_token in the code exchange.
+      // clientViaUserConsent returns an AutoRefreshingAuthClient directly.
+      _authClient = await clientViaUserConsent(
+        _clientId,
+        _scopes,
+        _openBrowserForAuth,
+      );
+
+      // Step 2 — Persist the refresh token for Drive session restore on restart
+      final refreshToken = _authClient!.credentials.refreshToken;
+      // ignore: avoid_print
+      print('[Drive][DIAG] ── Sign-in token check ──────────────────────');
+      // ignore: avoid_print
+      print('[Drive][DIAG] credentials.refreshToken: '
+          '${refreshToken != null ? "PRESENT (${refreshToken.length} chars)" : "NULL ← root cause A"}');
+
+      if (refreshToken != null) {
+        try {
+          await _writeToken(refreshToken);
+          final verify = await _readToken();
+          // ignore: avoid_print
+          print('[Drive][DIAG] Storage write verify: '
+              '${verify != null ? "OK" : "FILE WRITE FAILED"}');
+        } catch (e) {
+          // ignore: avoid_print
+          print('[Drive][DIAG] Storage write THREW: $e');
+        }
+      }
+
+      final accessToken = _authClient!.credentials.accessToken.data;
+
+      // Step 3 — Sign into Firebase Auth using the access token.
+      final oauthCredential = GoogleAuthProvider.credential(
+        accessToken: accessToken,
+      );
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(oauthCredential);
+
+      if (userCredential.user == null) {
+        throw const AuthException(
+          'Firebase sign-in returned no user.',
+          code: 'null-user',
+        );
+      }
+
+      AuthUser authUser = _toAuthUser(userCredential.user!);
+
+      // Step 4 — Initialize Drive workspace (idempotent)
+      try {
+        final driveService = DriveService(_authClient!);
+        final rootFolderId = await driveService.initializeWorkspace();
+        authUser = authUser.copyWith(rootFolderId: rootFolderId);
+        // ignore: avoid_print
+        print('[DriveService] ✅ rootFolderId=$rootFolderId');
+      } on DriveException catch (e) {
+        // ignore: avoid_print
+        print('[DriveService] ❌ ${e.message}');
+        AppErrorHandler.show(e);
+      } catch (e) {
+        AppErrorHandler.show(DriveException('Drive workspace setup failed: $e'));
+      }
+
+      // Step 5 — Save user profile to Firestore
+      try {
+        await FirestoreService().saveUserProfile(authUser);
+        // ignore: avoid_print
+        print('[FirestoreService] ✅ uid=${authUser.uid}');
+      } on FirestoreException catch (e) {
+        // ignore: avoid_print
+        print('[FirestoreService] ❌ ${e.message}');
+        AppErrorHandler.show(e);
+      }
+
+      // Firebase Auth notifies authStateChanges → GoRouter redirects to shell.
+      return authUser;
+    } on AuthException {
+      rethrow;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(
+        _firebaseErrorMessage(e.code),
+        code: e.code,
+        originalError: e,
+      );
+    } on AccessDeniedException catch (e) {
+      throw AuthException(
+        'Sign-in was cancelled.',
+        code: 'cancelled',
+        originalError: e,
+      );
+    } catch (e) {
+      throw AuthException(
+        'Sign-in failed: ${e.toString()}',
+        code: 'unknown',
+        originalError: e,
+      );
+    }
+  }
+
+  // ── Sign Out ─────────────────────────────────────────────────────
+
+  Future<void> signOut() async {
+    try {
+      _authClient?.close();
+      _authClient = null;
+
+      if (Platform.isAndroid) {
+        // GoogleSignIn manages its own session — sign out clears it
+        await _googleSignIn.signOut();
+      } else {
+        // Windows: close HTTP clients and delete stored refresh token
+        _restoreBaseClient?.close();
+        _restoreBaseClient = null;
+        await _deleteToken();
+      }
+
+      await _firebaseAuth.signOut();
+      // Firebase Auth notifies authStateChanges with null →
+      // GoRouter redirects to /login automatically.
+    } catch (e) {
+      throw AuthException('Sign-out failed.', originalError: e);
+    }
+  }
+
+  // ── Browser Helper ───────────────────────────────────────────────
+
+  void _openBrowserForAuth(String url) async {
+    final uri = Uri.parse(url);
+
+    // ROOT CAUSE FIX: googleapis_auth's PKCE flow does NOT include
+    // access_type=offline in the authorization URL. Without it, Google
+    // never returns a refresh_token regardless of prompt=consent.
+    //
+    // We inject both parameters here using proper URI replacement
+    // (not string concatenation) to ensure correct percent-encoding.
+    //   access_type=offline → Google includes refresh_token in token response
+    //   prompt=consent      → forces consent screen so token is always returned
+    //                         (even if user previously authorized the app)
+    final modifiedUri = uri.replace(
+      queryParameters: {
+        ...uri.queryParameters,
+        'access_type': 'offline',
+        'prompt': 'consent',
+      },
+    );
+
+    try {
+      final launched =
+          await launchUrl(modifiedUri, mode: LaunchMode.externalApplication);
+      if (!launched && (Platform.isWindows)) {
+        await Process.run('explorer', [modifiedUri.toString()]);
+      }
+    } catch (_) {
+      if (Platform.isWindows) {
+        await Process.run('explorer', [modifiedUri.toString()]);
+      }
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────
+
+  AuthUser _toAuthUser(User firebaseUser) {
+    return AuthUser(
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      displayName: firebaseUser.displayName,
+      photoUrl: firebaseUser.photoURL,
+    );
+  }
+
+  String _firebaseErrorMessage(String code) {
+    switch (code) {
+      case 'account-exists-with-different-credential':
+        return 'This account uses a different sign-in method.';
+      case 'invalid-credential':
+        return 'The credential is invalid or expired. Please try again.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'network-request-failed':
+        return 'No internet connection. Please check your network.';
+      default:
+        return 'Authentication failed ($code).';
+    }
+  }
+
+  // ── Singleton ────────────────────────────────────────────────────
+  static final GoogleAuthService _instance = GoogleAuthService._internal();
+  factory GoogleAuthService() => _instance;
+  GoogleAuthService._internal();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Android Drive HTTP Client
+// Wraps GoogleSignInAccount so every Drive API request automatically carries
+// a fresh access token. GoogleSignIn refreshes the token internally when needed
+// — no manual token management required.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GoogleSignInHttpClient extends http.BaseClient implements AuthClient {
+  final GoogleSignInAccount _account;
+  final http.Client _inner = http.Client();
+
+  _GoogleSignInHttpClient(this._account);
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final auth = await _account.authentication;
+    request.headers['Authorization'] = 'Bearer ${auth.accessToken}';
+    return _inner.send(request);
+  }
+
+  // AuthClient interface — credentials not used on Android path
+  @override
+  AccessCredentials get credentials => AccessCredentials(
+        AccessToken('Bearer', '', DateTime.now().toUtc()),
+        null,
+        [],
+      );
+
+  @override
+  void close() {
+    _inner.close();
+    super.close();
+  }
+}
