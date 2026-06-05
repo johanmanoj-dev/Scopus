@@ -174,19 +174,14 @@ class _LoginScreenState extends State<LoginScreen> {
   // ── Shared Widgets ──────────────────────────────────────────────────────────
 
   Widget _appLogo({double size = 80}) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(size * 0.25),
-        border: Border.all(
-          color: AppTheme.primary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.2),
+      child: Image.asset(
+        'assets/images/logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       ),
-      child: Icon(Icons.account_balance,
-          color: AppTheme.primary, size: size * 0.5),
     );
   }
 
