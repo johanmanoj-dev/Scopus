@@ -67,7 +67,12 @@ class _LoginScreenState extends State<LoginScreen> {
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppTheme.primary.withValues(alpha: 0.1),
+              color: const Color.fromARGB(
+                255,
+                255,
+                255,
+                255,
+              ).withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -75,14 +80,21 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _appLogo(),
-              const SizedBox(height: 32),
-              Text('Scopus',
-                  style: theme.textTheme.displayMedium
-                      ?.copyWith(color: AppTheme.primary)),
+              const SizedBox(height: 0),
+              Text(
+                'Scopus',
+                style: theme.textTheme.displayMedium?.copyWith(
+                  color: const Color.fromARGB(255, 248, 248, 248),
+                ),
+              ),
               const SizedBox(height: 12),
-              Text('Academic Workspace',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      color: AppTheme.textSecondary, letterSpacing: 1.2)),
+              Text(
+                'Academic Workspace',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  letterSpacing: 1.2,
+                ),
+              ),
               const SizedBox(height: 48),
               if (_isLoading)
                 const CircularProgressIndicator(color: AppTheme.primary)
@@ -121,12 +133,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 40),
+                        horizontal: 28,
+                        vertical: 40,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          color: const Color.fromARGB(
+                            255,
+                            255,
+                            255,
+                            255,
+                          ).withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),
@@ -134,22 +153,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _appLogo(size: 72),
-                          const SizedBox(height: 28),
-                          Text('Scopus',
-                              style: theme.textTheme.displaySmall
-                                  ?.copyWith(color: AppTheme.primary)),
-                          const SizedBox(height: 8),
-                          Text('Academic Workspace',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                  color: AppTheme.textSecondary,
-                                  letterSpacing: 1.2)),
+                          const SizedBox(height: 0),
+                          Text(
+                            'Scopus',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Academic Workspace',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: AppTheme.textSecondary,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           const SizedBox(height: 40),
                           if (_isLoading)
                             const SizedBox(
                               height: 52,
                               child: Center(
                                 child: CircularProgressIndicator(
-                                    color: AppTheme.primary),
+                                  color: AppTheme.primary,
+                                ),
                               ),
                             )
                           else

@@ -34,18 +34,32 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Settings', style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Settings',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 32),
 
               // ── Account Section ───────────────────────────────────────────────
-              Text('Account', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+              Text(
+                'Account',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F0F0F),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -57,9 +71,12 @@ class SettingsScreen extends ConsumerWidget {
                     else
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.25),
+                        backgroundColor: const Color(
+                          0xFF3B82F6,
+                        ).withValues(alpha: 0.25),
                         child: Text(
-                          currentUser?.name.substring(0, 1).toUpperCase() ?? 'S',
+                          currentUser?.name.substring(0, 1).toUpperCase() ??
+                              'S',
                           style: const TextStyle(
                             color: Color(0xFF60A5FA),
                             fontWeight: FontWeight.bold,
@@ -85,7 +102,9 @@ class SettingsScreen extends ConsumerWidget {
                             Text(
                               currentUser!.email,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                                color: AppTheme.textSecondary.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -104,18 +123,31 @@ class SettingsScreen extends ConsumerWidget {
                     backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                     foregroundColor: Colors.redAccent,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.2)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: BorderSide(
+                      color: Colors.redAccent.withValues(alpha: 0.2),
+                    ),
                   ),
                   icon: const Icon(Icons.logout),
-                  label: const Text('Sign out', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Sign out',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
 
               // ── Active semester actions ───────────────────────────────────────
               if (activeSemester != null) ...[
-                Text('Current Semester', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+                Text(
+                  'Current Semester',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _buildSettingsItem(
                   context: context,
@@ -123,7 +155,8 @@ class SettingsScreen extends ConsumerWidget {
                   iconColor: const Color(0xFF346BD9),
                   title: 'Rename Semester',
                   subtitle: activeSemester.title,
-                  onTap: () => _showRenameSemesterDialog(context, ref, activeSemester),
+                  onTap: () =>
+                      _showRenameSemesterDialog(context, ref, activeSemester),
                 ),
                 const SizedBox(height: 12),
                 _buildSettingsItem(
@@ -132,13 +165,20 @@ class SettingsScreen extends ConsumerWidget {
                   iconColor: Colors.redAccent,
                   title: 'Archive Semester',
                   subtitle: 'Move "${activeSemester.title}" to cold storage',
-                  onTap: () => _showArchiveConfirmation(context, ref, activeSemester),
+                  onTap: () =>
+                      _showArchiveConfirmation(context, ref, activeSemester),
                 ),
                 const SizedBox(height: 48),
               ],
-              
+
               // ── General ───────────────────────────────────────────────────────
-              Text('General', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+              Text(
+                'General',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               _buildSettingsItem(
                 context: context,
@@ -170,29 +210,25 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceVariant,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          'Sign out?',
-          style: Theme.of(ctx).textTheme.titleLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Sign out?', style: Theme.of(ctx).textTheme.titleLarge),
         content: Text(
           'You will need to sign in again to access your workspace.',
-          style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.textSecondary,
-          ),
+          style: Theme.of(
+            ctx,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('Sign out'),
           ),
         ],
@@ -203,9 +239,9 @@ class SettingsScreen extends ConsumerWidget {
       await GoogleAuthService().signOut();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to sign out: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to sign out: $e')));
       }
     }
   }
@@ -219,12 +255,23 @@ class SettingsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Settings', style: theme.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Settings',
+            style: theme.textTheme.displayMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 48),
 
           // ── Active semester actions ─────────────────────────────────────────
           if (activeSemester != null) ...[
-            Text('Current Semester', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+            Text(
+              'Current Semester',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
             _buildSettingsItem(
               context: context,
@@ -232,7 +279,8 @@ class SettingsScreen extends ConsumerWidget {
               iconColor: const Color(0xFF346BD9),
               title: 'Rename Semester',
               subtitle: activeSemester.title,
-              onTap: () => _showRenameSemesterDialog(context, ref, activeSemester),
+              onTap: () =>
+                  _showRenameSemesterDialog(context, ref, activeSemester),
             ),
             const SizedBox(height: 12),
             _buildSettingsItem(
@@ -241,13 +289,20 @@ class SettingsScreen extends ConsumerWidget {
               iconColor: Colors.redAccent,
               title: 'Archive Semester',
               subtitle: 'Move "${activeSemester.title}" to cold storage',
-              onTap: () => _showArchiveConfirmation(context, ref, activeSemester),
+              onTap: () =>
+                  _showArchiveConfirmation(context, ref, activeSemester),
             ),
             const SizedBox(height: 48),
           ],
 
           // ── General ───────────────────────────────────────────────────────
-          Text('General', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+          Text(
+            'General',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 16),
           _buildSettingsItem(
             context: context,
@@ -284,7 +339,10 @@ class SettingsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF0F0F0F),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -295,7 +353,10 @@ class SettingsScreen extends ConsumerWidget {
           splashColor: Colors.white.withValues(alpha: 0.05),
           highlightColor: Colors.transparent,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
             child: Row(
               children: [
                 Container(
@@ -313,17 +374,24 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         title,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.2)),
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
               ],
             ),
           ),
@@ -335,10 +403,15 @@ class SettingsScreen extends ConsumerWidget {
   // ── Rename Semester ─────────────────────────────────────────────────────────
 
   void _showRenameSemesterDialog(
-      BuildContext context, WidgetRef ref, Semester semester) async {
+    BuildContext context,
+    WidgetRef ref,
+    Semester semester,
+  ) async {
     final isOnline = ref.read(networkStatusProvider).value ?? true;
     if (!isOnline) {
-      AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+      AppErrorHandler.showMessage(
+        'Device offline. This action requires an internet connection.',
+      );
       return;
     }
     final controller = TextEditingController(text: semester.title);
@@ -350,7 +423,10 @@ class SettingsScreen extends ConsumerWidget {
         titlePadding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
         contentPadding: const EdgeInsets.symmetric(horizontal: 32),
         actionsPadding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
-        title: const Text('Rename Semester', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Rename Semester',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SizedBox(
           width: 420,
           child: TextField(
@@ -369,14 +445,19 @@ class SettingsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               _renameSemester(ref, semester, controller.text);
             },
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF346BD9)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF346BD9),
+            ),
             child: const Text('Rename'),
           ),
         ],
@@ -387,15 +468,19 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _renameSemester(
-      WidgetRef ref, Semester semester, String newTitle) async {
+    WidgetRef ref,
+    Semester semester,
+    String newTitle,
+  ) async {
     final trimmed = newTitle.trim();
     if (trimmed.isEmpty || trimmed == semester.title) return;
     try {
       final uid = ref.read(currentUidProvider);
 
       // 1. Update Firestore
-      await FirestoreService()
-          .updateSemester(uid, semester.id, {'title': trimmed});
+      await FirestoreService().updateSemester(uid, semester.id, {
+        'title': trimmed,
+      });
 
       // 2. Rename Drive folder if Drive session available
       final authClient = GoogleAuthService().authClient;
@@ -404,17 +489,21 @@ class SettingsScreen extends ConsumerWidget {
         return;
       }
       if (semester.driveFolderId.isNotEmpty) {
-        await DriveService(authClient)
-            .renameFolder(semester.driveFolderId, trimmed);
+        await DriveService(
+          authClient,
+        ).renameFolder(semester.driveFolderId, trimmed);
       }
       // semestersProvider stream auto-updates — sidebar + settings reflect new name
     } catch (e) {
       if (e is FirestoreException || e is DriveException) {
         AppErrorHandler.show(e as AppException);
       } else {
-        AppErrorHandler.show(FirestoreException(
+        AppErrorHandler.show(
+          FirestoreException(
             'Failed to rename semester: $e',
-            code: 'semester-rename-failed'));
+            code: 'semester-rename-failed',
+          ),
+        );
       }
     }
   }
@@ -422,10 +511,15 @@ class SettingsScreen extends ConsumerWidget {
   // ── Archive Semester ────────────────────────────────────────────────────────
 
   void _showArchiveConfirmation(
-      BuildContext context, WidgetRef ref, Semester semester) async {
+    BuildContext context,
+    WidgetRef ref,
+    Semester semester,
+  ) async {
     final isOnline = ref.read(networkStatusProvider).value ?? true;
     if (!isOnline) {
-      AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+      AppErrorHandler.showMessage(
+        'Device offline. This action requires an internet connection.',
+      );
       return;
     }
     final confirmController = TextEditingController();
@@ -441,7 +535,9 @@ class SettingsScreen extends ConsumerWidget {
 
             return AlertDialog(
               backgroundColor: AppTheme.surfaceVariant,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               titlePadding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
               contentPadding: const EdgeInsets.symmetric(horizontal: 32),
               actionsPadding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
@@ -449,7 +545,10 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   Icon(Icons.archive_outlined, color: Colors.redAccent),
                   SizedBox(width: 12),
-                  Text('Archive Semester?', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Archive Semester?',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               content: SizedBox(
@@ -459,55 +558,82 @@ class SettingsScreen extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Archiving this semester will:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Archiving this semester will:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 16),
-                      _bulletPoint('Move all subjects and files to read-only cold storage'),
-                      _bulletPoint('Require creating a new semester to continue'),
+                      _bulletPoint(
+                        'Move all subjects and files to read-only cold storage',
+                      ),
+                      _bulletPoint(
+                        'Require creating a new semester to continue',
+                      ),
                       const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.redAccent.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: const Text(
+                          'Archived semesters cannot be restored. You can view them and access files via Google Drive.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.5,
+                            color: Colors.redAccent,
+                          ),
+                        ),
                       ),
-                      child: const Text(
-                        'Archived semesters cannot be restored. You can view them and access files via Google Drive.',
-                        style: TextStyle(fontSize: 13, height: 1.5, color: Colors.redAccent),
+                      const SizedBox(height: 32),
+                      Text(
+                        'Type the semester name to confirm:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    Text(
-                      'Type the semester name to confirm:',
-                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: confirmController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: semester.title,
-                        hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.4)),
-                        errorText: confirmController.text.isNotEmpty && !inputMatches ? 'Name does not match' : null,
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: confirmController,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: semester.title,
+                          hintStyle: TextStyle(
+                            color: AppTheme.textSecondary.withValues(
+                              alpha: 0.4,
+                            ),
+                          ),
+                          errorText:
+                              confirmController.text.isNotEmpty && !inputMatches
+                              ? 'Name does not match'
+                              : null,
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                        onSubmitted: (_) {
+                          if (inputMatches) {
+                            Navigator.pop(ctx);
+                            _archiveSemester(ref, semester);
+                          }
+                        },
                       ),
-                      onChanged: (_) => setDialogState(() {}),
-                      onSubmitted: (_) {
-                        if (inputMatches) {
-                          Navigator.pop(ctx);
-                          _archiveSemester(ref, semester);
-                        }
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
+              actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
                   },
-                  child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
                 ),
                 FilledButton(
                   onPressed: inputMatches
@@ -518,9 +644,14 @@ class SettingsScreen extends ConsumerWidget {
                       : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    disabledBackgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+                    disabledBackgroundColor: Colors.redAccent.withValues(
+                      alpha: 0.2,
+                    ),
                   ),
-                  child: const Text('Archive Semester', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Archive Semester',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             );
@@ -540,8 +671,10 @@ class SettingsScreen extends ConsumerWidget {
       // emits null (driven by ScopusApp's ref.listen).
     } catch (e) {
       AppErrorHandler.show(
-        FirestoreException('Failed to archive semester: $e',
-            code: 'semester-archive-failed'),
+        FirestoreException(
+          'Failed to archive semester: $e',
+          code: 'semester-archive-failed',
+        ),
       );
     }
   }
@@ -552,7 +685,14 @@ class SettingsScreen extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            '• ',
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(width: 4),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
@@ -572,16 +712,33 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppTheme.surfaceVariant,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          titlePadding: EdgeInsets.fromLTRB(isAndroid ? 24 : 32, isAndroid ? 24 : 32, isAndroid ? 24 : 32, 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          titlePadding: EdgeInsets.fromLTRB(
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+            16,
+          ),
           contentPadding: EdgeInsets.symmetric(horizontal: isAndroid ? 24 : 32),
-          actionsPadding: EdgeInsets.fromLTRB(isAndroid ? 24 : 32, isAndroid ? 16 : 24, isAndroid ? 24 : 32, isAndroid ? 24 : 32),
+          actionsPadding: EdgeInsets.fromLTRB(
+            isAndroid ? 24 : 32,
+            isAndroid ? 16 : 24,
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+          ),
           title: Row(
             children: [
               const Icon(Icons.inventory_2_outlined, color: Colors.white),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('Archived Semesters', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Archived Semesters',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -593,7 +750,9 @@ class SettingsScreen extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         'No archived semesters yet.',
-                        style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ),
                   )
@@ -607,19 +766,41 @@ class SettingsScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF0F0F0F),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
                         ),
                         child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(horizontal: isAndroid ? 12 : 20, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.white.withValues(alpha: 0.05),
-                            child: const Icon(Icons.school_outlined, color: Colors.white),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isAndroid ? 12 : 20,
+                            vertical: 8,
                           ),
-                          title: Text(s.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.05,
+                            ),
+                            child: const Icon(
+                              Icons.school_outlined,
+                              color: Colors.white,
+                            ),
+                          ),
+                          title: Text(
+                            s.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           trailing: isAndroid
-                              ? Icon(Icons.lock_outline, size: 20, color: AppTheme.textSecondary)
+                              ? Icon(
+                                  Icons.lock_outline,
+                                  size: 20,
+                                  color: AppTheme.textSecondary,
+                                )
                               : Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(20),
@@ -627,9 +808,19 @@ class SettingsScreen extends ConsumerWidget {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.lock_outline, size: 14, color: AppTheme.textSecondary),
+                                      Icon(
+                                        Icons.lock_outline,
+                                        size: 14,
+                                        color: AppTheme.textSecondary,
+                                      ),
                                       const SizedBox(width: 6),
-                                      Text('Read-only', style: theme.textTheme.labelMedium?.copyWith(color: AppTheme.textSecondary)),
+                                      Text(
+                                        'Read-only',
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -656,23 +847,40 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppTheme.surfaceVariant,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          titlePadding: EdgeInsets.fromLTRB(isAndroid ? 24 : 32, isAndroid ? 24 : 32, isAndroid ? 24 : 32, 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          titlePadding: EdgeInsets.fromLTRB(
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+            16,
+          ),
           contentPadding: EdgeInsets.symmetric(horizontal: isAndroid ? 24 : 32),
-          actionsPadding: EdgeInsets.fromLTRB(isAndroid ? 24 : 32, isAndroid ? 16 : 24, isAndroid ? 24 : 32, isAndroid ? 24 : 32),
+          actionsPadding: EdgeInsets.fromLTRB(
+            isAndroid ? 24 : 32,
+            isAndroid ? 16 : 24,
+            isAndroid ? 24 : 32,
+            isAndroid ? 24 : 32,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.school, size: 64, color: Color(0xFF346BD9)),
-              const SizedBox(height: 24),
+              const SizedBox(height: 25),
+              Image.asset('assets/images/logo.png', width: 64, height: 64),
+              const SizedBox(height: 0),
               Text(
                 'Scopus',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'v1.0.0',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 32),
               const Text(
@@ -687,30 +895,43 @@ class SettingsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F0F0F),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
                 ),
                 child: Column(
                   children: [
                     const Text(
                       'Made by',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Johan P Manoj',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     InkWell(
                       onTap: () async {
-                        final url = Uri.parse('https://github.com/johanmanoj-dev');
+                        final url = Uri.parse(
+                          'https://github.com/johanmanoj-dev',
+                        );
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url);
                         }
                       },
                       borderRadius: BorderRadius.circular(4),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4.0,
+                          vertical: 2.0,
+                        ),
                         child: Text(
                           'github.com/johanmanoj-dev',
                           style: TextStyle(
@@ -735,10 +956,17 @@ class SettingsScreen extends ConsumerWidget {
                   context: context,
                   applicationName: 'Scopus',
                   applicationVersion: '1.0.0',
-                  applicationIcon: const Icon(Icons.school, size: 48, color: Color(0xFF346BD9)),
+                  applicationIcon: Image.asset(
+                    'assets/images/logo.png',
+                    width: 48,
+                    height: 48,
+                  ),
                 );
               },
-              child: const Text('View Licenses', style: TextStyle(color: AppTheme.textSecondary)),
+              child: const Text(
+                'View Licenses',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
