@@ -49,19 +49,23 @@ class _AssignmentCardState extends State<AssignmentCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      cursor: widget.isReadOnly ? SystemMouseCursors.basic : SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(20.0),
-        transform: Matrix4.diagonal3Values(
-          _isHovered ? 1.01 : 1.0, 
-          _isHovered ? 1.01 : 1.0, 
-          1.0
-        ),
-        transformAlignment: Alignment.center,
-        decoration: BoxDecoration(
+      cursor: widget.isReadOnly || widget.assignment.isPendingSync ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      child: Opacity(
+        opacity: widget.assignment.isPendingSync ? 0.6 : 1.0,
+        child: IgnorePointer(
+          ignoring: widget.assignment.isPendingSync,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.all(20.0),
+            transform: Matrix4.diagonal3Values(
+              _isHovered && !widget.assignment.isPendingSync ? 1.01 : 1.0, 
+              _isHovered && !widget.assignment.isPendingSync ? 1.01 : 1.0, 
+              1.0
+            ),
+            transformAlignment: Alignment.center,
+            decoration: BoxDecoration(
           color: statusColor.withValues(alpha: _isHovered ? 0.12 : 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -154,6 +158,23 @@ class _AssignmentCardState extends State<AssignmentCard> {
                   color: AppTheme.textSecondary,
                 ),
               ),
+              if (widget.assignment.isPendingSync) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'To be synced',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           if (!widget.isReadOnly && widget.onDelete != null) ...[
@@ -167,6 +188,8 @@ class _AssignmentCardState extends State<AssignmentCard> {
           ],
         ],
       ),
+          ),
+        ),
       ),
     );
   }

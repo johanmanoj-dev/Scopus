@@ -5,7 +5,7 @@ import '../../core/providers/semester_provider.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/services/google_auth_service.dart';
 import '../../core/utils/network_monitor.dart';
-import '../../core/utils/sync_manager.dart';
+
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -16,8 +16,6 @@ class Sidebar extends ConsumerWidget {
     final activeSemester = ref.watch(activeSemesterProvider);
     final isOnline = ref.watch(networkStatusProvider).value ?? true;
     
-    // Keep sync manager alive and listening
-    ref.watch(syncManagerProvider);
 
     return Container(
       width: 250,

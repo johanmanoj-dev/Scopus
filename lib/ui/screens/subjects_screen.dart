@@ -423,15 +423,15 @@ class _SubjectCardState extends ConsumerState<_SubjectCard> {
             ),
           ),
 
-          // ── Options button — fades in on hover ────────────────────
+          // ── Options button — fades in on hover (always visible on Android) ────────────────────
           Positioned(
             top: 8,
             right: 8,
             child: AnimatedOpacity(
-              opacity: _hovered ? 1.0 : 0.0,
+              opacity: (Platform.isAndroid || _hovered) ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 150),
               child: IgnorePointer(
-                ignoring: !_hovered,
+                ignoring: !(Platform.isAndroid || _hovered),
                 child: PopupMenuButton<_SubjectAction>(
                   tooltip: 'Options',
                   offset: const Offset(0, 36),

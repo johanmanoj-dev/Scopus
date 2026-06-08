@@ -53,7 +53,16 @@ class GoogleAuthService {
   // ── Android Google Sign-In ─────────────────────────────────────
   // Native account picker on Android — no browser, no localhost server.
   // Session persistence and token refresh are managed internally by GoogleSignIn.
+  //
+  // serverClientId MUST be the Web OAuth client ID from google-services.json
+  // (client_type: 3). Without it, Google Play Services throws Error 10
+  // (DEVELOPER_ERROR) because it can't validate which server to authenticate for.
+  //
+  // Internal (not private) so _GoogleSignInHttpClient can read currentUser
+  // without caching a stale GoogleSignInAccount reference.
+  // ignore: library_private_types_in_public_api
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '29526936061-0kodpve0mjp2peeit9hqvgmticb8avig.apps.googleusercontent.com',
     scopes: [
       'email',
       'profile',
@@ -166,7 +175,7 @@ class GoogleAuthService {
             .signInSilently()
             .timeout(const Duration(seconds: 6), onTimeout: () => null);
         if (account != null) {
-          _authClient = _GoogleSignInHttpClient(account);
+          _authClient = _GoogleSignInHttpClient();
           // ignore: avoid_print
           print('[Drive] ✅ Session restored silently (Android)');
         } else {
@@ -240,7 +249,7 @@ class GoogleAuthService {
       if (account == null) {
         throw const AuthException('Sign-in was cancelled.', code: 'cancelled');
       }
-      _authClient = _GoogleSignInHttpClient(account);
+      _authClient = _GoogleSignInHttpClient();
       // ignore: avoid_print
       print('[Drive] ✅ Reconnected (Android)');
       return;
@@ -274,6 +283,13 @@ class GoogleAuthService {
     try {
       // ── Android: native account picker ──────────────────────────
       if (Platform.isAndroid) {
+        // Always sign out first to clear any stale GMS internal state.
+        // A previous failed signInSilently() or expired session can leave
+        // GoogleSignIn in a corrupt state that causes DEVELOPER_ERROR (10)
+        // on subsequent signIn() calls. signOut() only clears GoogleSignIn's
+        // in-memory state — it does NOT affect Firebase Auth.
+        await _googleSignIn.signOut();
+
         final account = await _googleSignIn.signIn();
         if (account == null) {
           throw const AuthException('Sign-in was cancelled.', code: 'cancelled');
@@ -295,8 +311,9 @@ class GoogleAuthService {
           );
         }
 
-        // Drive HTTP client — auto-refreshes tokens via GoogleSignIn
-        _authClient = _GoogleSignInHttpClient(account);
+        // Drive HTTP client — always reads GoogleSignIn.currentUser at
+        // request time so it never holds a stale account reference.
+        _authClient = _GoogleSignInHttpClient();
 
         AuthUser authUser = _toAuthUser(userCredential.user!);
 
@@ -524,20 +541,35 @@ class GoogleAuthService {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Android Drive HTTP Client
-// Wraps GoogleSignInAccount so every Drive API request automatically carries
-// a fresh access token. GoogleSignIn refreshes the token internally when needed
-// — no manual token management required.
+// Wraps GoogleSignIn so every Drive API request automatically carries
+// a fresh access token. Instead of caching the GoogleSignInAccount at sign-in
+// time (which becomes stale when the access token expires), we always read
+// GoogleSignIn.currentUser at request time to get the live account object.
+// GoogleSignIn refreshes the token internally via Google Play Services.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GoogleSignInHttpClient extends http.BaseClient implements AuthClient {
-  final GoogleSignInAccount _account;
   final http.Client _inner = http.Client();
 
-  _GoogleSignInHttpClient(this._account);
+  _GoogleSignInHttpClient();
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final auth = await _account.authentication;
+    // Always read the current user — never use a cached/stale account reference.
+    final account = GoogleAuthService._googleSignIn.currentUser;
+    if (account == null) {
+      throw const AuthException(
+        'Google Sign-In session lost. Please sign in again.',
+        code: 'no-current-user',
+      );
+    }
+    final auth = await account.authentication;
+    if (auth.accessToken == null) {
+      throw const AuthException(
+        'Could not obtain access token. Please sign in again.',
+        code: 'no-access-token',
+      );
+    }
     request.headers['Authorization'] = 'Bearer ${auth.accessToken}';
     return _inner.send(request);
   }

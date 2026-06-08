@@ -17,6 +17,7 @@ import '../../core/utils/network_monitor.dart';
 import '../../core/database/cache_database.dart';
 import '../../core/errors/app_error_handler.dart';
 import '../widgets/riverpod_error_state.dart';
+import 'package:uuid/uuid.dart';
 
 class AssignmentsScreen extends ConsumerWidget {
   const AssignmentsScreen({super.key});
@@ -305,6 +306,8 @@ class AssignmentsScreen extends ConsumerWidget {
   }
 
   void _deleteAssignment(BuildContext context, WidgetRef ref, Assignment assignment) {
+    if (assignment.isPendingSync) return; // Disallow deleting while pending sync
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -326,16 +329,14 @@ class AssignmentsScreen extends ConsumerWidget {
             style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () async {
               Navigator.pop(ctx);
-              final uid = ref.read(currentUidProvider);
               final isOnline = ref.read(networkStatusProvider).value ?? true;
+              if (!isOnline) {
+                AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+                return;
+              }
+              final uid = ref.read(currentUidProvider);
               try {
-                if (isOnline) {
-                  await FirestoreService().deleteAssignment(uid, assignment.id);
-                } else {
-                  final payload = jsonEncode({'assignmentId': assignment.id});
-                  await CacheDatabase().enqueueOperation('delete_assignment', payload);
-                  AppErrorHandler.showMessage("You're offline. This will sync when you reconnect.", isError: false);
-                }
+                await FirestoreService().deleteAssignment(uid, assignment.id);
               } catch (e) {
                 AppErrorHandler.showMessage('Error: $e');
               }
@@ -516,8 +517,10 @@ class AssignmentsScreen extends ConsumerWidget {
     if (title.isEmpty) return;
 
     final uid = ref.read(currentUidProvider);
+    final isOnline = ref.read(networkStatusProvider).value ?? true;
+
     final assignment = Assignment(
-      id: '',
+      id: isOnline ? '' : const Uuid().v4(), // Generate temp ID for optimistic UI
       semesterId: semesterId,
       title: title,
       subjectId: selectedSubject?.id,
@@ -526,7 +529,6 @@ class AssignmentsScreen extends ConsumerWidget {
       createdAt: AppTime.now(),
     );
 
-    final isOnline = ref.read(networkStatusProvider).value ?? true;
     try {
       if (isOnline) {
         await FirestoreService().createAssignment(uid, assignment);
@@ -543,7 +545,7 @@ class AssignmentsScreen extends ConsumerWidget {
           'createdAt': assignment.createdAt.toIso8601String(),
         });
         await CacheDatabase().enqueueOperation('create_assignment', payload);
-        AppErrorHandler.showMessage("You're offline. This will sync when you reconnect.", isError: false);
+        // Toast removed: UI will optimistically show "To be synced"
       }
     } catch (e) {
       AppErrorHandler.showMessage('Error: $e');

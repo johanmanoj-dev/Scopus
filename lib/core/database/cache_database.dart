@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,6 +16,8 @@ class CacheDatabase {
   CacheDatabase._internal();
 
   Database? _db;
+  final StreamController<void> _queueUpdates = StreamController<void>.broadcast();
+  Stream<void> get onQueueChanged => _queueUpdates.stream;
 
   /// Initializes the SQLite database and creates the file_cache table.
   /// Must be called in `main()` before the app runs.
@@ -153,6 +156,7 @@ class CacheDatabase {
       'payload': payload,
       'created_at': AppTime.now().millisecondsSinceEpoch,
     });
+    _queueUpdates.add(null);
   }
 
   /// Retrieves all pending operations, ordered by oldest first.
@@ -170,5 +174,6 @@ class CacheDatabase {
       where: 'id = ?',
       whereArgs: [id],
     );
+    _queueUpdates.add(null);
   }
 }

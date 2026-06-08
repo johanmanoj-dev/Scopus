@@ -9,6 +9,7 @@ import '../../core/providers/semester_provider.dart';
 import '../../core/services/drive_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/google_auth_service.dart';
+import '../../core/utils/network_monitor.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/utils/app_time.dart';
 import '../../models/semester_model.dart';
@@ -121,6 +122,12 @@ class _NoSemesterScreenState extends ConsumerState<NoSemesterScreen>
   Future<void> _createSemester(String title) async {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return;
+
+    final isOnline = ref.read(networkStatusProvider).value ?? true;
+    if (!isOnline) {
+      AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+      return;
+    }
 
     setState(() => _isCreating = true);
     try {

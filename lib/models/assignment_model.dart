@@ -13,6 +13,7 @@ class Assignment {
   final bool isDone;
   final DateTime? doneAt;
   final DateTime createdAt;
+  final bool isPendingSync;
 
   const Assignment({
     required this.id,
@@ -24,6 +25,7 @@ class Assignment {
     this.isDone = false,
     this.doneAt,
     required this.createdAt,
+    this.isPendingSync = false,
   });
 
   /// Computed property: An assignment is missed if it's not done and the due date has passed.
@@ -33,6 +35,32 @@ class Assignment {
     final today = DateTime(now.year, now.month, now.day);
     final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
     return today.isAfter(due);
+  }
+
+  Assignment copyWith({
+    String? id,
+    String? semesterId,
+    String? title,
+    String? subjectId,
+    String? subjectName,
+    DateTime? dueDate,
+    bool? isDone,
+    DateTime? doneAt,
+    DateTime? createdAt,
+    bool? isPendingSync,
+  }) {
+    return Assignment(
+      id: id ?? this.id,
+      semesterId: semesterId ?? this.semesterId,
+      title: title ?? this.title,
+      subjectId: subjectId ?? this.subjectId,
+      subjectName: subjectName ?? this.subjectName,
+      dueDate: dueDate ?? this.dueDate,
+      isDone: isDone ?? this.isDone,
+      doneAt: doneAt ?? this.doneAt,
+      createdAt: createdAt ?? this.createdAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+    );
   }
 
   factory Assignment.fromFirestore(DocumentSnapshot doc) {
@@ -63,28 +91,5 @@ class Assignment {
     };
   }
 
-  Assignment copyWith({
-    String? id,
-    String? semesterId,
-    String? title,
-    String? subjectId,
-    String? subjectName,
-    DateTime? dueDate,
-    bool? isDone,
-    DateTime? doneAt,
-    DateTime? createdAt,
-  }) {
-    return Assignment(
-      id: id ?? this.id,
-      semesterId: semesterId ?? this.semesterId,
-      title: title ?? this.title,
-      subjectId: subjectId ?? this.subjectId,
-      subjectName: subjectName ?? this.subjectName,
-      dueDate: dueDate ?? this.dueDate,
-      isDone: isDone ?? this.isDone,
-      doneAt: doneAt ?? this.doneAt,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
 }
 

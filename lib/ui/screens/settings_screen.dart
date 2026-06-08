@@ -10,6 +10,7 @@ import '../../core/services/drive_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/google_auth_service.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/utils/network_monitor.dart';
 import '../../models/semester_model.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -335,6 +336,11 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showRenameSemesterDialog(
       BuildContext context, WidgetRef ref, Semester semester) async {
+    final isOnline = ref.read(networkStatusProvider).value ?? true;
+    if (!isOnline) {
+      AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+      return;
+    }
     final controller = TextEditingController(text: semester.title);
     await showDialog(
       context: context,
@@ -417,6 +423,11 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showArchiveConfirmation(
       BuildContext context, WidgetRef ref, Semester semester) async {
+    final isOnline = ref.read(networkStatusProvider).value ?? true;
+    if (!isOnline) {
+      AppErrorHandler.showMessage('Device offline. This action requires an internet connection.');
+      return;
+    }
     final confirmController = TextEditingController();
 
     await showDialog(

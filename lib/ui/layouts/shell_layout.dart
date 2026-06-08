@@ -2,8 +2,39 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/utils/network_monitor.dart';
+import '../../core/utils/sync_manager.dart';
 import '../widgets/sidebar.dart';
+
+class _OfflineBanner extends ConsumerWidget {
+  const _OfflineBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize global SyncManager
+    ref.watch(syncManagerProvider);
+
+    final isOnline = ref.watch(networkStatusProvider).value ?? true;
+    if (isOnline) return const SizedBox.shrink();
+    if (!Platform.isAndroid) return const SizedBox.shrink(); // Windows already has an offline indicator
+
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        width: double.infinity,
+        color: Colors.grey.shade800, // Grey background for Android
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: const Text(
+          'Offline - Changes will sync when reconnected',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+}
 
 class ShellLayout extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -35,7 +66,12 @@ class ShellLayout extends StatelessWidget {
         }
       },
       child: Scaffold(
-        body: navigationShell, // The navigationShell widget holds the AndroidSwipeShell we defined in app_router
+        body: Column(
+          children: [
+            const _OfflineBanner(),
+            Expanded(child: navigationShell),
+          ],
+        ), // The navigationShell widget holds the AndroidSwipeShell we defined in app_router
         bottomNavigationBar: Theme(
           data: Theme.of(context).copyWith(
             splashColor: Colors.transparent,
@@ -107,11 +143,18 @@ class ShellLayout extends StatelessWidget {
 
   Widget _buildWindows(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          const Sidebar(),
+          const _OfflineBanner(),
           Expanded(
-            child: navigationShell, // On Windows, navigationShell just renders the active branch
+            child: Row(
+              children: [
+                const Sidebar(),
+                Expanded(
+                  child: navigationShell, // On Windows, navigationShell just renders the active branch
+                ),
+              ],
+            ),
           ),
         ],
       ),
