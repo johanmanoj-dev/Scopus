@@ -1,6 +1,8 @@
 import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
+import 'package:window_manager/window_manager.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,21 @@ Future<void> main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    
+    // Initialize window_manager for custom title bar
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 720),
+      minimumSize: Size(800, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden, // Hides the native "island" title bar
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
   }
 
   // ── Parallel startup ────────────────────────────────────────────────
@@ -104,6 +121,24 @@ class _ScopusAppState extends ConsumerState<ScopusApp> {
       theme: AppTheme.darkAcademicTheme,
       routerConfig: _router,
       scaffoldMessengerKey: AppErrorHandler.scaffoldMessengerKey,
+      builder: (context, child) {
+        if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+          return child!;
+        }
+        // Custom seamless title bar for desktop
+        return Scaffold(
+          backgroundColor: const Color(0xFF323339), // Background color matching the top bar
+          // Placing WindowCaption in appBar safely limits its height to 46.0 pixels!
+          appBar: const PreferredSize(
+            preferredSize: Size.fromHeight(32.0),
+            child: WindowCaption(
+              brightness: Brightness.dark,
+              backgroundColor: Color(0xFF323339), // Custom #323339 title bar
+            ),
+          ),
+          body: child!,
+        );
+      },
     );
   }
 }

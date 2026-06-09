@@ -1,0 +1,117 @@
+
+══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞═════════════════════════════════════════════════════════
+The following assertion was thrown during performLayout():
+BoxConstraints forces an infinite height.
+These invalid constraints were provided to RenderFlex's layout() function by the following function,
+which probably computed the invalid constraints in question:
+  RenderConstrainedBox.performLayout (package:flutter/src/rendering/proxy_box.dart:296:14)
+The offending constraints were:
+  BoxConstraints(w=1129.2, h=Infinity)
+
+The relevant error-causing widget was:
+  SizedBox
+  SizedBox:file:///C:/Users/johan/AppData/Local/Pub/Cache/hosted/pub.dev/window_manager-0.5.1/lib/src/widgets/window_cap
+  tion.dart:68:22
+
+When the exception was thrown, this was the stack:
+#0      BoxConstraints.debugAssertIsValid.<anonymous closure>.throwError (package:flutter/src/rendering/box.dart:549:9)
+#1      BoxConstraints.debugAssertIsValid.<anonymous closure> (package:flutter/src/rendering/box.dart:614:11)
+#2      BoxConstraints.debugAssertIsValid (package:flutter/src/rendering/box.dart:619:6)
+#3      RenderObject.layout (package:flutter/src/rendering/object.dart:2668:19)
+#4      RenderConstrainedBox.performLayout (package:flutter/src/rendering/proxy_box.dart:296:14)
+#5      RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#6      RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#7      RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#8      RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#9      RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#10     ChildLayoutHelper.layoutChild (package:flutter/src/rendering/layout_helper.dart:62:11)
+#11     RenderFlex._computeSizes (package:flutter/src/rendering/flex.dart:1275:26)
+#12     RenderFlex.performLayout (package:flutter/src/rendering/flex.dart:1329:32)
+#13     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#14     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#15     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#16     ChildLayoutHelper.layoutChild (package:flutter/src/rendering/layout_helper.dart:62:11)
+#17     RenderFlex._computeSizes (package:flutter/src/rendering/flex.dart:1237:28)
+#18     RenderFlex.performLayout (package:flutter/src/rendering/flex.dart:1329:32)
+#19     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#20     MultiChildLayoutDelegate.layoutChild (package:flutter/src/rendering/custom_layout.dart:180:12)
+#21     _ScaffoldLayout.performLayout (package:flutter/src/material/scaffold.dart:1113:7)
+#22     MultiChildLayoutDelegate._callPerformLayout (package:flutter/src/rendering/custom_layout.dart:246:7)
+#23     RenderCustomMultiChildLayoutBox.performLayout (package:flutter/src/rendering/custom_layout.dart:417:14)
+#24     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#25     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#26     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#27     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#28     _RenderCustomClip.performLayout (package:flutter/src/rendering/proxy_box.dart:1549:11)
+#29     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#30     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#31     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#32     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#33     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#34     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#35     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#36     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#37     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#38     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#39     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#40     RenderProxyBoxMixin.performLayout (package:flutter/src/rendering/proxy_box.dart:118:18)
+#41     RenderObject.layout (package:flutter/src/rendering/object.dart:2768:7)
+#42     RenderView.performLayout (package:flutter/src/rendering/view.dart:292:12)
+#43     RenderObject._layoutWithoutResize (package:flutter/src/rendering/object.dart:2616:7)
+#44     PipelineOwner.flushLayout (package:flutter/src/rendering/object.dart:1174:18)
+#45     PipelineOwner.flushLayout (package:flutter/src/rendering/object.dart:1187:15)
+#46     RendererBinding.drawFrame (package:flutter/src/rendering/binding.dart:629:23)
+#47     WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1304:13)
+#48     RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495:5)
+#49     SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1430:15)
+#50     SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345:9)
+#51     SchedulerBinding.scheduleWarmUpFrame.<anonymous closure> (package:flutter/src/scheduler/binding.dart:1055:9)
+#52     PlatformDispatcher.scheduleWarmUpFrame.<anonymous closure> (dart:ui/platform_dispatcher.dart:906:16)
+#56     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+(elided 3 frames from class _Timer and dart:async-patch)
+
+The following RenderObject was being processed when the exception was fired: RenderConstrainedBox#6dd83
+relayoutBoundary=up6 NEEDS-LAYOUT NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE:
+  creator: SizedBox ← Listener ← _GestureSemantics ← RawGestureDetector ← GestureDetector ←
+    DragToMoveArea ← Expanded ← Row ← DecoratedBox ← WindowCaption ← Column ←
+    KeyedSubtree-[GlobalKey#004fc] ← ⋯
+  parentData: <none> (can use size)
+  constraints: BoxConstraints(w=1129.2, 0.0<=h<=Infinity)
+  size: MISSING
+  additionalConstraints: BoxConstraints(0.0<=w<=Infinity, h=Infinity)
+This RenderObject had the following descendants (showing up to depth 5):
+    child: RenderFlex#ebbae NEEDS-LAYOUT NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+      child 1: RenderPadding#ae0f8 NEEDS-LAYOUT NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+        child: RenderLimitedBox#85411 NEEDS-LAYOUT NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+          child: RenderConstrainedBox#97f3f NEEDS-LAYOUT NEEDS-PAINT
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Another exception was thrown: RenderBox was not laid out: RenderConstrainedBox#6dd83 relayoutBoundary=up6 NEEDS-PAINT
+NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderPointerListener#e8827 relayoutBoundary=up5 NEEDS-PAINT
+NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#fb928 relayoutBoundary=up4
+NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderFlex#7a38f relayoutBoundary=up3 NEEDS-PAINT
+NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderDecoratedBox#deb8e relayoutBoundary=up2 NEEDS-PAINT
+NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderFlex#9fcd5 relayoutBoundary=up1 NEEDS-PAINT
+NEEDS-COMPOSITING-BITS-UPDATE
+Another exception was thrown: RenderBox was not laid out: RenderDecoratedBox#deb8e relayoutBoundary=up2
+[Drive][DIAG] ── Restore attempt ────────────────────────────
+[Drive][DIAG] Firebase UID: zR5GV143BiMrtHbBX22zyRxPBUk1
+Another exception was thrown: 'package:flutter/src/widgets/heroes.dart': Failed assertion: line 983 pos 12:
+'navigatorRenderObject.hasSize': is not true.
+[Drive][DIAG] Stored token on restore: PRESENT
+Another exception was thrown: Cannot hit test a render box that has never been laid out.
+[ERROR:flutter/shell/common/shell.cc(1183)] The 'plugins.flutter.io/firebase_firestore/query/4548a317-2920-4c4b-8c4d-c79eae597d6d' channel sent a message from native to Flutter on a non-platform thread. Platform channel messages must be sent on the platform thread. Failure to do so may result in data loss or crashes, and must be fixed in the plugin or application code creating that channel.
+See https://docs.flutter.dev/platform-integration/platform-channels#channels-and-platform-threading for more information.
+Another exception was thrown: 'package:flutter/src/widgets/heroes.dart': Failed assertion: line 983 pos 12:
+'navigatorRenderObject.hasSize': is not true.
+[ERROR:flutter/shell/common/shell.cc(1183)] The 'plugins.flutter.io/firebase_firestore/query/fcb6d251-9e55-4046-8e67-b804bccfb828' channel sent a message from native to Flutter on a non-platform thread. Platform channel messages must be sent on the platform thread. Failure to do so may result in data loss or crashes, and must be fixed in the plugin or application code creating that channel.
+See https://docs.flutter.dev/platform-integration/platform-channels#channels-and-platform-threading for more information.
+[Drive] ✅ Session restored silently
+AppTime synced with internet. Offset: 0 seconds.
+Another exception was thrown: Cannot hit test a render box that has never been laid out.
+Another exception was thrown: Cannot hit test a render box that has never been laid out.
