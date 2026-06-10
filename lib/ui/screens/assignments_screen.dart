@@ -18,6 +18,7 @@ import '../../core/database/cache_database.dart';
 import '../../core/errors/app_error_handler.dart';
 import '../widgets/riverpod_error_state.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/services/notification_service.dart';
 
 class AssignmentsScreen extends ConsumerWidget {
   const AssignmentsScreen({super.key});
@@ -293,6 +294,7 @@ class AssignmentsScreen extends ConsumerWidget {
                   await CacheDatabase().enqueueOperation('mark_done', payload);
                   AppErrorHandler.showMessage("You're offline. This will sync when you reconnect.", isError: false);
                 }
+                NotificationService().cancelReminder(assignment.id);
               } catch (e) {
                 AppErrorHandler.showMessage('Error: $e');
               }
@@ -337,6 +339,7 @@ class AssignmentsScreen extends ConsumerWidget {
               final uid = ref.read(currentUidProvider);
               try {
                 await FirestoreService().deleteAssignment(uid, assignment.id);
+                NotificationService().cancelReminder(assignment.id);
               } catch (e) {
                 AppErrorHandler.showMessage('Error: $e');
               }
@@ -531,7 +534,8 @@ class AssignmentsScreen extends ConsumerWidget {
 
     try {
       if (isOnline) {
-        await FirestoreService().createAssignment(uid, assignment);
+        final newId = await FirestoreService().createAssignment(uid, assignment);
+        NotificationService().scheduleAssignmentReminder(assignment.copyWith(id: newId));
       } else {
         final payload = jsonEncode({
           'id': assignment.id,

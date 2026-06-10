@@ -6,6 +6,7 @@ import '../database/cache_database.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import 'network_monitor.dart';
+import '../services/notification_service.dart';
 
 /// A provider that initializes and manages background sync.
 /// Watch or read this provider in the root layout to keep it alive.
@@ -67,12 +68,15 @@ class SyncManager {
               createdAt: DateTime.parse(payload['createdAt'] as String),
             );
             await FirestoreService().createAssignment(uid, assignment);
+            NotificationService().scheduleAssignmentReminder(assignment);
           } else if (operation == 'mark_done') {
             final assignmentId = payload['assignmentId'] as String;
             await FirestoreService().markAssignmentDone(uid, assignmentId);
+            NotificationService().cancelReminder(assignmentId);
           } else if (operation == 'delete_assignment') {
             final assignmentId = payload['assignmentId'] as String;
             await FirestoreService().deleteAssignment(uid, assignmentId);
+            NotificationService().cancelReminder(assignmentId);
           }
 
           // Operation succeeded (or was handled), remove from queue

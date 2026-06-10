@@ -19,10 +19,15 @@ import 'core/services/google_auth_service.dart';
 import 'core/themes/app_theme.dart';
 import 'core/utils/app_time.dart';
 import 'firebase_options.dart';
+import 'core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  if (Platform.isAndroid) {
+    await NotificationService().init();
+  }
 
   // Desktop platforms need the FFI-based SQLite; Android/iOS have native sqflite.
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
