@@ -877,7 +877,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'v1.0.0',
+                'v1.0.1',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
@@ -955,7 +955,7 @@ class SettingsScreen extends ConsumerWidget {
                 showLicensePage(
                   context: context,
                   applicationName: 'Scopus',
-                  applicationVersion: '1.0.0',
+                  applicationVersion: '1.0.1',
                   applicationIcon: Image.asset(
                     'assets/images/logo.png',
                     width: 48,
